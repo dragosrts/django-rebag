@@ -1,0 +1,75 @@
+services:
+  mysqlapp:
+    image: mysql:latest
+    container_name: mysqlapp
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PWD}
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysql",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${DB_ROOT_PWD}",
+          "-e",
+          "SELECT 1",
+        ]
+      timeout: 30s
+      retries: 10
+    volumes:
+      - mysql_data:/var/lib/mysql
+    env_file:
+      - .env
+
+  djangowebapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: djangowebapp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 5s
+      retries: 5
+    restart: always
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    environment:
+      DJANGO_SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      DJANGO_LOGLEVEL: ${DJANGO_LOGLEVEL}
+      DB_ENGINE: ${DB_ENGINE}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+    env_file:
+      - .env
+    depends_on:
+      - mysqlapp
+    volumes:
+      - .:/app
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginxapp
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./staticfiles:/static
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - djangowebapp
+
+volumes:
+  mysql_data:

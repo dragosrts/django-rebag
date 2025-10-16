@@ -1,0 +1,40 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block after_related_objects %}
+{{ block.super }}
+
+    <div>
+        <button type="button" id="create-giftcard-btn" class="button default">➕ Create Gift Card</button>
+        <button type="button" id="record-usage-btn" class="button default">⚡ Record Order Usage</button>
+    </div>
+
+    <hr>
+    <h2>🎁 Gift Cards</h2>
+    <div id="giftcards-section" data-customer-id="{{ original.id }}">
+        <p>Loading gift cards...</p>
+    </div>
+
+    <hr>
+
+    <h2>🧾 Orders</h2>
+    <div id="orders-section" data-customer-id="{{ original.id }}">
+        <p>Loading orders...</p>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-container">
+        <div id="modal-content">
+            <h3 id="modal-title">Modal</h3>
+            <div id="modal-fields"></div>
+            <div>
+                <button type="button" id="modal-cancel" class="button">Cancel</button>
+                <button type="button" id="modal-save" class="button default">Save</button>
+            </div>
+        </div>
+    </div>
+
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<script src="{% static 'js/giftcard_admin.js' %}"></script>
+{% endblock %}
+
