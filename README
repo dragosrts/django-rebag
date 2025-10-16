@@ -1,6 +1,6 @@
-title: REBAG challange
+##REBAG challange
 
-# REQUIREMENT:
+## REQUIREMENT:
     We want to award gift cards to customers. 
     Once a customer is awarded a gift card, 
     he can use it to pay with any order placed on our website.
@@ -16,19 +16,19 @@ title: REBAG challange
     REST API calls should be built to create/update and retrieve gift card records. 
     For the extra parts that are not covered by django admin you can use either plain js or jquery.
 
-# DATABASE STRUCTURE:
+## DATABASE STRUCTURE:
 
     - A CUSTOMER IS A USER (Customer is a Group, and a USER can be added to the group)
     - USERS -- OneToMany -- ORDERS
     - USERS -- OneToMany -- GIFTCARDS
     - GIFTCARDS -- ManyToMany -- ORDERS
 
-#   STARTUP
+##   STARTUP
     - docker compose up --build
     - python manage.py createsuperuser
     - login
 
-#   SET UP
+##   SET UP
     - Create new Group Called 'Customer'
     - Create new users and assign them to the 'Customer' group
     - Insert Orders into DB. (Assumed Order is an already implemented app)
