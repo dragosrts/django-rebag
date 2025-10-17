@@ -1,9 +1,11 @@
+import logging
 from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from django.db import transaction
+from apps.order.models import Order
 from apps.giftcard.models import GiftCard, OrderGiftCard
 from .serializers import GiftCardSerializer, RecordUsageSerializer
 from decimal import Decimal
@@ -43,7 +45,42 @@ class GiftCardViewSet(viewsets.ModelViewSet):
 
         return Response(self.get_serializer(giftcard).data, status=status.HTTP_201_CREATED)
 
-
+    @staticmethod  
+    def consume_giftcards(order_id):
+        order = Order.objects.get(pk=order_id)
+        giftcards = GiftCard.objects.filter(user=order.user, current_amount__gt=0).order_by("created_at")
+        
+        order_amount = order.total_amount
+        for giftcard in giftcards:
+            remaining_amount = order_amount - giftcard.current_amount
+            
+            if remaining_amount == 0:
+                print("Inside remaining remaining_amount == 0")
+                gc_amount = giftcard.current_amount
+                order_amount -= giftcard.current_amount
+                GiftCardViewSet.save_amount(giftcard, order, order_amount, gc_amount)
+                break
+            
+            if remaining_amount < 0:
+                print("Inside remaining amount < 0")
+                GiftCardViewSet.save_amount(giftcard, order, 0, order_amount)
+                break
+            
+            order_amount -= giftcard.current_amount
+            GiftCardViewSet.save_amount(giftcard, order, order_amount, giftcard.current_amount)
+            
+    @staticmethod            
+    def save_amount(giftcard, order, order_remaining_ammount, gc_consumed_amount):
+        print(f"Consuming {gc_consumed_amount} from GiftCard {giftcard.code} for Order #{order.id} with remaining amount {order_remaining_ammount}" )
+        order.total_amount = order_remaining_ammount
+        giftcard.current_amount -= gc_consumed_amount
+        order.save(update_fields=["total_amount"])
+        giftcard.save(update_fields=["current_amount"])
+        OrderGiftCard.objects.create(
+            giftcard=giftcard,
+            order=order,
+            amount_used=gc_consumed_amount
+        )
 
     @action(detail=False, methods=["post"], permission_classes=[permissions.IsAdminUser])
     @transaction.atomic
